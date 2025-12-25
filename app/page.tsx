@@ -91,7 +91,7 @@ export default function HomePage() {
             className="text-3xl sm:text-4xl font-semibold"
             style={{ color: "rgba(60,30,80,0.92)" }}
           >
-            Open the gift that matches the number you found 💝
+            Open the gift that matches the number from the pill 💝
           </h1>
 
           <div className="flex justify-center text-sm">
