@@ -88,7 +88,7 @@ export default function GiftCard({
       className="group relative w-full aspect-square rounded-[26px] p-3 shadow-[0_10px_30px_rgba(0,0,0,0.10)] hover:shadow-[0_14px_40px_rgba(0,0,0,0.14)] transition-shadow"
       style={{
         background:
-          "linear-gradient(135deg, rgba(255,235,246,0.95), rgba(232,242,255,0.95))",
+          "linear-gradient(135deg, rgba(255,235,246,0.95), rgba(25, 96, 189, 0.95))",
         border: "1px solid rgba(255, 255, 255, 0.70)",
         overflow: "hidden",
       }}
