@@ -142,21 +142,47 @@ export default function GiftCard({
           }}
         />
 
+        {/* EMOJI BOW */}
+        <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 z-20 pointer-events-none">
+            <div
+                style={{
+                fontSize: "clamp(32px, 10vw, 56px)",
+                filter: "drop-shadow(0 6px 10px rgba(0,0,0,0.25))",
+                transform: isAnimating ? "scale(0.9) rotate(-6deg)" : "scale(1)",
+                transition: "transform 0.3s ease",
+            }}
+            >
+                🎀
+            </div>
+        </div>
+
+
         {/* big number badge (more apparent) */}
         <div className="absolute top-3 left-3">
-          <div
-            className="rounded-2xl px-3 py-2 shadow-sm"
-            style={{
-              background: "rgba(255,255,255,0.82)",
-              border: "1px solid rgba(255,255,255,0.65)",
-              backdropFilter: "blur(10px)",
-            }}
-          >
-            <div className="text-2xl font-extrabold leading-none text-[rgba(60,30,80,0.92)]">
-              {label}
+            <div
+                className="grid place-items-center rounded-2xl shadow-sm"
+                style={{
+                background: "rgba(255,255,255,0.82)",
+                border: "1px solid rgba(255,255,255,0.65)",
+                backdropFilter: "blur(10px)",
+                width: "clamp(44px, 18%, 62px)",
+                height: "clamp(44px, 18%, 62px)",
+                }}
+            >
+                <div
+                className="font-extrabold text-[rgba(60,30,80,0.92)]"
+                style={{
+                    fontSize: "clamp(18px, 4.5vw, 30px)",
+                    lineHeight: 1,
+                    letterSpacing: "-0.02em",
+                    transform: "translateY(0.5px)", // tiny optical centering
+                }}
+                >
+                {label}
+                </div>
             </div>
-          </div>
-        </div>
+            </div>
+
       </div>
 
       {/* CONTENT */}
