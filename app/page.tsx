@@ -125,7 +125,7 @@ export default function HomePage() {
         <div className="mt-8">
           {loading ? (
             <div className="text-sm" style={{ color: "rgba(60,30,80,0.65)" }}>
-              Loading gifts…
+              Loading moments...
             </div>
           ) : (
             <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-6 gap-5">
@@ -160,7 +160,7 @@ export default function HomePage() {
             onClick={(e) => e.stopPropagation()}
           >
             <div className="text-xl font-semibold text-center text-[rgba(60,30,80,0.92)]">
-              Open Gift #{confirmGift.gift_number}?
+              Open Moment #{confirmGift.gift_number}?
             </div>
             <div className="mt-2 text-sm text-center text-[rgba(60,30,80,0.65)]">
               Once you open it, it stays open!
