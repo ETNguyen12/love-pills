@@ -1,7 +1,7 @@
 "use client";
 
 import confetti from "canvas-confetti";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 
 export type Gift = {
   gift_number: number;
@@ -14,156 +14,201 @@ export type Gift = {
 
 export default function GiftCard({
   gift,
-  onOpen,
+  onRequestOpen,
+  onOpenViewer,
   soundEnabled,
 }: {
   gift: Gift;
-  onOpen: (gift_number: number) => Promise<void>;
+  onRequestOpen: (gift: Gift) => void;
+  onOpenViewer: (gift: Gift) => void;
   soundEnabled: boolean;
 }) {
   const [isAnimating, setIsAnimating] = useState(false);
-
+  const wasOpenRef = useRef<boolean>(!!gift.opened_at);
   const isOpen = !!gift.opened_at;
 
   const label = useMemo(() => gift.gift_number.toString(), [gift.gift_number]);
+
+  // Fire confetti when it transitions from wrapped -> opened (after confirm + DB update)
+  useEffect(() => {
+    const wasOpen = wasOpenRef.current;
+    if (!wasOpen && isOpen) {
+      // a little celebratory pop
+      setTimeout(() => {
+        confetti({ particleCount: 90, spread: 70, origin: { y: 0.65 } });
+      }, 250);
+    }
+    wasOpenRef.current = isOpen;
+  }, [isOpen]);
+
+  function tinyUnwrapSound() {
+    if (!soundEnabled) return;
+    try {
+      const ctx = new (window.AudioContext ||
+        (window as any).webkitAudioContext)();
+      const o = ctx.createOscillator();
+      const g = ctx.createGain();
+      o.type = "triangle";
+      o.frequency.setValueAtTime(520, ctx.currentTime);
+      o.frequency.exponentialRampToValueAtTime(220, ctx.currentTime + 0.18);
+      g.gain.value = 0.001;
+      o.connect(g);
+      g.connect(ctx.destination);
+      o.start();
+      g.gain.exponentialRampToValueAtTime(0.08, ctx.currentTime + 0.02);
+      g.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.22);
+      o.stop(ctx.currentTime + 0.24);
+    } catch {}
+  }
 
   async function handleClick() {
     if (isAnimating) return;
 
     if (!isOpen) {
+      // satisfyingly “start unwrap” then ask to confirm open
       setIsAnimating(true);
+      tinyUnwrapSound();
 
-      if (soundEnabled) {
-        // tiny “unwrap” sound using WebAudio (no file needed)
-        try {
-          const ctx = new (window.AudioContext || (window as any).webkitAudioContext)();
-          const o = ctx.createOscillator();
-          const g = ctx.createGain();
-          o.type = "triangle";
-          o.frequency.value = 440;
-          g.gain.value = 0.001;
-          o.connect(g);
-          g.connect(ctx.destination);
-          o.start();
-          g.gain.exponentialRampToValueAtTime(0.06, ctx.currentTime + 0.02);
-          g.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.18);
-          o.stop(ctx.currentTime + 0.2);
-        } catch {}
-      }
-
-      // Start confetti near end of unwrap
+      // small local animation delay so it feels responsive
       setTimeout(() => {
-        confetti({
-          particleCount: 70,
-          spread: 60,
-          origin: { y: 0.65 },
-        });
-      }, 650);
+        setIsAnimating(false);
+        onRequestOpen(gift);
+      }, 520);
 
-      // Mark opened in DB
-      await onOpen(gift.gift_number);
-
-      // Finish animation
-      setTimeout(() => setIsAnimating(false), 900);
+      return;
     }
+
+    // Opened: go fullscreen
+    onOpenViewer(gift);
   }
 
   return (
     <button
       onClick={handleClick}
-      className="group relative w-full aspect-square rounded-2xl p-3 shadow-sm hover:shadow-md transition-shadow"
+      className="group relative w-full aspect-square rounded-[26px] p-3 shadow-[0_10px_30px_rgba(0,0,0,0.10)] hover:shadow-[0_14px_40px_rgba(0,0,0,0.14)] transition-shadow"
       style={{
         background:
-          "linear-gradient(135deg, rgba(255,225,244,0.9), rgba(220,235,255,0.9))",
-        border: "1px solid rgba(255, 255, 255, 0.6)",
+          "linear-gradient(135deg, rgba(255,235,246,0.95), rgba(232,242,255,0.95))",
+        border: "1px solid rgba(255, 255, 255, 0.70)",
         overflow: "hidden",
       }}
       aria-label={`Gift ${label}`}
     >
-      {/* Ribbon / wrap overlay */}
+      {/* WRAP OVERLAY (only while wrapped) */}
       <div
         className={[
           "absolute inset-0 transition-all duration-700 ease-out",
           isOpen ? "opacity-0 pointer-events-none" : "opacity-100",
-          isAnimating ? "scale-105 rotate-2" : "scale-100 rotate-0",
         ].join(" ")}
       >
-        <div className="absolute inset-0 opacity-70"
-             style={{ background: "linear-gradient(180deg, rgba(255,255,255,0.55), rgba(255,255,255,0.12))" }}
+        {/* soft paper sheen */}
+        <div
+          className="absolute inset-0"
+          style={{
+            background:
+              "radial-gradient(circle at 25% 20%, rgba(255,255,255,0.85), rgba(255,255,255,0.12) 55%, rgba(255,255,255,0.10))",
+            opacity: 0.55,
+          }}
         />
-        <div className="absolute left-1/2 top-0 h-full w-10 -translate-x-1/2 opacity-60"
-             style={{ background: "linear-gradient(180deg, rgba(255,140,190,0.9), rgba(255,210,235,0.9))" }}
+
+        {/* ribbon cross */}
+        <div
+          className="absolute left-1/2 top-0 h-full w-12 -translate-x-1/2"
+          style={{
+            background:
+              "linear-gradient(180deg, rgba(255,120,190,0.95), rgba(255,210,235,0.92))",
+            opacity: 0.8,
+          }}
         />
-        <div className="absolute top-1/2 left-0 w-full h-10 -translate-y-1/2 opacity-60"
-             style={{ background: "linear-gradient(90deg, rgba(255,140,190,0.9), rgba(255,210,235,0.9))" }}
+        <div
+          className="absolute top-1/2 left-0 w-full h-12 -translate-y-1/2"
+          style={{
+            background:
+              "linear-gradient(90deg, rgba(255,120,190,0.95), rgba(255,210,235,0.92))",
+            opacity: 0.8,
+          }}
         />
-        {/* peel effect */}
+
+        {/* peel sheet */}
         <div
           className={[
             "absolute inset-0",
             "transition-transform duration-700 ease-out",
-            isAnimating ? "-translate-y-full -rotate-6" : "translate-y-0 rotate-0",
+            isAnimating ? "-translate-y-[115%] -rotate-6" : "translate-y-0 rotate-0",
           ].join(" ")}
-          style={{ background: "rgba(255,255,255,0.10)" }}
+          style={{
+            background:
+              "linear-gradient(180deg, rgba(255,255,255,0.22), rgba(255,255,255,0.06))",
+          }}
         />
-      </div>
 
-      {/* Number badge */}
-      <div className="absolute top-3 left-3 z-10">
-        <div className="rounded-full px-3 py-1 text-sm font-semibold shadow-sm"
-             style={{ background: "rgba(255,255,255,0.75)" }}>
-          {label}
+        {/* big number badge (more apparent) */}
+        <div className="absolute top-3 left-3">
+          <div
+            className="rounded-2xl px-3 py-2 shadow-sm"
+            style={{
+              background: "rgba(255,255,255,0.82)",
+              border: "1px solid rgba(255,255,255,0.65)",
+              backdropFilter: "blur(10px)",
+            }}
+          >
+            <div className="text-2xl font-extrabold leading-none text-[rgba(60,30,80,0.92)]">
+              {label}
+            </div>
+          </div>
         </div>
       </div>
 
-      {/* Content */}
-      <div className="relative z-0 h-full w-full flex items-center justify-center">
+      {/* CONTENT */}
+      <div className="relative z-0 h-full w-full rounded-2xl overflow-hidden">
         {!isOpen ? (
-          <div className="text-center px-2">
-            <div className="text-xl font-semibold" style={{ color: "rgba(60,30,80,0.9)" }}>
-              Wrapped 💝
-            </div>
-            <div className="text-xs mt-1" style={{ color: "rgba(60,30,80,0.6)" }}>
-              tap to open
-            </div>
-          </div>
+          // wrapped state just shows the wrap overlay (no extra text)
+          <div className="h-full w-full" />
         ) : (
-          <div className="w-full h-full flex flex-col items-center justify-center gap-2">
-            <div className="w-full h-[72%] rounded-xl overflow-hidden shadow-sm bg-white/50">
-              {gift.media_type === "image" ? (
-                // eslint-disable-next-line @next/next/no-img-element
-                <img
-                  src={gift.public_url}
-                  alt={gift.caption ?? `Gift ${gift.gift_number}`}
-                  className="w-full h-full object-cover"
-                  loading="lazy"
-                />
-              ) : (
+          // opened state: ONLY media (no number/text)
+          <>
+            {gift.media_type === "image" ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img
+                src={gift.public_url}
+                alt={gift.caption ?? `Gift ${gift.gift_number}`}
+                className="h-full w-full object-cover"
+                loading="lazy"
+              />
+            ) : (
+              <div className="relative h-full w-full bg-black/20">
                 <video
                   src={gift.public_url}
-                  className="w-full h-full object-cover"
-                  controls
+                  className="h-full w-full object-cover"
+                  // grid preview (no controls). Fullscreen modal uses controls+autoplay.
+                  muted
                   playsInline
                   preload="metadata"
                 />
-              )}
-            </div>
-            {gift.caption ? (
-              <div className="text-sm text-center px-2" style={{ color: "rgba(60,30,80,0.85)" }}>
-                {gift.caption}
-              </div>
-            ) : (
-              <div className="text-xs text-center px-2" style={{ color: "rgba(60,30,80,0.55)" }}>
-                opened ✨
+                {/* play icon hint */}
+                <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                  <div
+                    className="rounded-full px-3 py-2 text-xs font-semibold"
+                    style={{
+                      background: "rgba(255,255,255,0.22)",
+                      color: "rgba(255,255,255,0.92)",
+                      backdropFilter: "blur(8px)",
+                      border: "1px solid rgba(255,255,255,0.18)",
+                    }}
+                  >
+                    ▶︎
+                  </div>
+                </div>
               </div>
             )}
-          </div>
+          </>
         )}
       </div>
 
-      {/* subtle hover glow */}
-      <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity"
-           style={{ boxShadow: "inset 0 0 0 2px rgba(255,255,255,0.6)" }}
+      {/* subtle hover ring */}
+      <div
+        className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity"
+        style={{ boxShadow: "inset 0 0 0 2px rgba(255,255,255,0.55)" }}
       />
     </button>
   );
