@@ -24,3 +24,14 @@ body {
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
 }
+
+:root {
+  --bg1: #fff7fb;
+  --bg2: #f4f7ff;
+}
+
+body {
+  background: radial-gradient(1200px 600px at 20% 10%, var(--bg1), transparent 60%),
+              radial-gradient(900px 500px at 80% 30%, var(--bg2), transparent 60%),
+              #ffffff;
+}
