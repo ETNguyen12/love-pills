@@ -6,7 +6,6 @@ import GiftCard, { Gift } from "@/components/GiftCard";
 export default function HomePage() {
   const [gifts, setGifts] = useState<Gift[]>([]);
   const [loading, setLoading] = useState(true);
-  const [soundEnabled, setSoundEnabled] = useState(false);
 
   // Confirm modal state
   const [confirmGift, setConfirmGift] = useState<Gift | null>(null);
@@ -87,7 +86,7 @@ export default function HomePage() {
   return (
     <main className="min-h-screen px-4 py-10">
       <div className="mx-auto max-w-6xl">
-        <div className="flex flex-col gap-3 items-start">
+        <div className="flex flex-col items-center gap-4 text-center">
           <h1
             className="text-3xl sm:text-4xl font-semibold"
             style={{ color: "rgba(60,30,80,0.92)" }}
@@ -95,33 +94,32 @@ export default function HomePage() {
             Open the gift that matches the number you found 💝
           </h1>
 
-          <div className="flex flex-wrap items-center gap-3 text-sm">
-            <div className="rounded-full px-3 py-1 shadow-sm bg-white/60">
-              Opened: <span className="font-semibold">{openedCount}</span> /{" "}
-              {gifts.length || 53}
-            </div>
-
-            <label className="flex items-center gap-2 rounded-full px-3 py-1 shadow-sm bg-white/60 cursor-pointer select-none">
-              <input
-                type="checkbox"
-                checked={soundEnabled}
-                onChange={(e) => setSoundEnabled(e.target.checked)}
-              />
-              sound
-            </label>
-
-            <button
-              onClick={loadGifts}
-              className="rounded-full px-3 py-1 shadow-sm bg-white/60 hover:bg-white/80 transition"
-            >
-              refresh
-            </button>
+          <div className="flex justify-center text-sm">
+            <div
+  className="rounded-2xl px-4 py-2 shadow-sm"
+  style={{
+    background:
+      "linear-gradient(135deg, rgba(255,255,255,0.78), rgba(255,255,255,0.52))",
+    border: "1px solid rgba(255,255,255,0.70)",
+    backdropFilter: "blur(10px)",
+  }}
+>
+  <div className="text-[10px] tracking-[0.18em] uppercase text-[rgba(60,30,80,0.55)]">
+    Opened
+  </div>
+  <div className="flex items-end gap-2">
+    <div
+      className="font-extrabold leading-none"
+      style={{ fontSize: "clamp(22px, 3.8vw, 34px)", color: "rgba(60,30,80,0.92)" }}
+    >
+      {openedCount}
+    </div>
+    <div className="pb-[2px] text-sm text-[rgba(60,30,80,0.55)]">
+      / {gifts.length || 53}
+    </div>
+  </div>
+</div>
           </div>
-
-          <p className="text-sm" style={{ color: "rgba(60,30,80,0.65)" }}>
-            Tap a gift. If it’s wrapped, you’ll confirm before opening. Opened
-            gifts can be viewed fullscreen.
-          </p>
         </div>
 
         <div className="mt-8">
@@ -137,7 +135,7 @@ export default function HomePage() {
                   gift={gift}
                   onRequestOpen={requestOpen}
                   onOpenViewer={openViewer}
-                  soundEnabled={soundEnabled}
+                  soundEnabled={true}
                 />
               ))}
             </div>
